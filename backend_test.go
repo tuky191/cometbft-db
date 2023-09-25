@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/strikesecurity/strikememongo"
 )
 
 // Register a test backend for PrefixDB as well, with some unrelated junk data
@@ -34,8 +35,21 @@ func cleanupDBDir(dir, name string) {
 
 func testBackendGetSetDelete(t *testing.T, backend BackendType) {
 	// Default
-	dirname, err := os.MkdirTemp("", fmt.Sprintf("test_backend_%s_", backend))
-	require.Nil(t, err)
+
+	var dirname string
+	var err error
+	if backend == MongoDBBackend {
+		options := &strikememongo.Options{MongoVersion: "4.0.5"}
+		mongoServer, err := strikememongo.StartWithOptions(options)
+		require.Nil(t, err)
+		defer mongoServer.Stop()
+		// Get MongoDB URI
+		dirname = mongoServer.URI()
+	} else {
+		dirname, err = os.MkdirTemp("", fmt.Sprintf("test_backend_%s_", backend))
+		require.Nil(t, err)
+
+	}
 	db, err := NewDB("testdb", backend, dirname)
 	require.NoError(t, err)
 	defer cleanupDBDir(dirname, "testdb")
@@ -161,8 +175,19 @@ func TestDBIterator(t *testing.T) {
 }
 
 func testDBIterator(t *testing.T, backend BackendType) {
+	var dir string
+	var dir2 string
 	name := fmt.Sprintf("test_%x", randStr(12))
-	dir := os.TempDir()
+	if backend == MongoDBBackend {
+		options := &strikememongo.Options{MongoVersion: "4.0.5"}
+		mongoServer, err := strikememongo.StartWithOptions(options)
+		require.Nil(t, err)
+		defer mongoServer.Stop()
+		// Get MongoDB URI
+		dir = mongoServer.URI()
+	} else {
+		dir = os.TempDir()
+	}
 	db, err := NewDB(name, backend, dir)
 	require.NoError(t, err)
 	defer cleanupDBDir(dir, name)
@@ -301,11 +326,23 @@ func testDBIterator(t *testing.T, backend BackendType) {
 		[]int64(nil), "reverse iterator from 2 (ex) to 4")
 
 	// Ensure that the iterators don't panic with an empty database.
-	dir2, err := os.MkdirTemp("", "tm-db-test")
-	require.NoError(t, err)
+
+	if backend == MongoDBBackend {
+		options := &strikememongo.Options{MongoVersion: "4.0.5"}
+		mongoServer, err := strikememongo.StartWithOptions(options)
+		require.Nil(t, err)
+		defer mongoServer.Stop()
+		// Get MongoDB URI
+		dir2 = mongoServer.URI()
+		defer mongoServer.Stop()
+	} else {
+		dir2, err = os.MkdirTemp("", "tm-db-test")
+		require.NoError(t, err)
+		defer cleanupDBDir(dir2, name)
+	}
+
 	db2, err := NewDB(name, backend, dir2)
 	require.NoError(t, err)
-	defer cleanupDBDir(dir2, name)
 
 	itr, err = db2.Iterator(nil, nil)
 	require.NoError(t, err)
@@ -336,7 +373,18 @@ func TestDBBatch(t *testing.T) {
 
 func testDBBatch(t *testing.T, backend BackendType) {
 	name := fmt.Sprintf("test_%x", randStr(12))
-	dir := os.TempDir()
+	var dir string
+	if backend == MongoDBBackend {
+		options := &strikememongo.Options{MongoVersion: "4.0.5"}
+		mongoServer, err := strikememongo.StartWithOptions(options)
+		require.Nil(t, err)
+		defer mongoServer.Stop()
+		// Get MongoDB URI
+		dir = mongoServer.URI()
+	} else {
+		dir = os.TempDir()
+	}
+
 	db, err := NewDB(name, backend, dir)
 	require.NoError(t, err)
 	defer cleanupDBDir(dir, name)
