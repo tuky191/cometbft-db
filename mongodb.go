@@ -89,46 +89,37 @@ func (db *MongoDB) Has(key []byte) (bool, error) {
 }
 
 func (db *MongoDB) Set(key []byte, value []byte) error {
-	if len(key) == 0 {
-		return errKeyEmpty
-	}
-	if value == nil {
-		return errValueNil
-	}
-
-	// _, err := db.collection.InsertOne(context.Background(), bson.M{"key": key, "value": value})
-	updateOpts := &options.UpdateOptions{}
-	updateOpts.SetUpsert(true)
-	_, err := db.collection.UpdateOne(
-		context.Background(),
-		bson.M{"key": key},
-		bson.M{"$set": bson.M{"value": value}},
-		updateOpts,
-	)
-
-	return err
+	return db.set(key, value, false)
 }
 
 func (db *MongoDB) Delete(key []byte) error {
-	if len(key) == 0 {
-		return errKeyEmpty
-	}
-	_, err := db.collection.DeleteOne(context.Background(), bson.M{"key": key})
-	return err
+	return db.delete(key, false)
 }
 
 func (db *MongoDB) SetSync(key []byte, value []byte) error {
+	return db.set(key, value, true)
+}
+
+func (db *MongoDB) DeleteSync(key []byte) error {
+	return db.delete(key, true)
+}
+
+func (db *MongoDB) set(key []byte, value []byte, sync bool) error {
 	if len(key) == 0 {
 		return errKeyEmpty
 	}
 	if value == nil {
 		return errValueNil
 	}
-	// _, err := db.syncCollection.InsertOne(context.Background(), bson.M{"key": key, "value": value})
+
+	collection := db.collection
+	if sync {
+		collection = db.syncCollection
+	}
 
 	updateOpts := &options.UpdateOptions{}
 	updateOpts.SetUpsert(true)
-	_, err := db.collection.UpdateOne(
+	_, err := collection.UpdateOne(
 		context.Background(),
 		bson.M{"key": key},
 		bson.M{"$set": bson.M{"value": value}},
@@ -138,11 +129,17 @@ func (db *MongoDB) SetSync(key []byte, value []byte) error {
 	return err
 }
 
-func (db *MongoDB) DeleteSync(key []byte) error {
+func (db *MongoDB) delete(key []byte, sync bool) error {
 	if len(key) == 0 {
 		return errKeyEmpty
 	}
-	_, err := db.syncCollection.DeleteOne(context.Background(), bson.M{"key": key})
+
+	collection := db.collection
+	if sync {
+		collection = db.syncCollection
+	}
+
+	_, err := collection.DeleteOne(context.Background(), bson.M{"key": key})
 	return err
 }
 

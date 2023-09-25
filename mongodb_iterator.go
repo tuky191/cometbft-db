@@ -107,25 +107,28 @@ func (itr *MongoDBIterator) assertIsValid() {
 }
 
 func (db *MongoDB) createIterator(start, end []byte, sortDirection int) (Iterator, error) {
+	var filter primitive.M
+
 	if (start != nil && len(start) == 0) || (end != nil && len(end) == 0) {
 		return nil, errKeyEmpty
 	}
-	var filter primitive.M
-	if start == nil && end == nil {
+
+	switch {
+	case start == nil && end == nil:
 		filter = bson.M{}
-	} else if start == nil {
+	case start == nil:
 		filter = bson.M{
 			"key": bson.M{
 				"$lt": end,
 			},
 		}
-	} else if end == nil {
+	case end == nil:
 		filter = bson.M{
 			"key": bson.M{
 				"$gte": start,
 			},
 		}
-	} else {
+	default:
 		filter = bson.M{
 			"key": bson.M{
 				"$gte": start,
@@ -133,21 +136,14 @@ func (db *MongoDB) createIterator(start, end []byte, sortDirection int) (Iterato
 			},
 		}
 	}
+
 	opts := options.Find().SetSort(bson.M{"key": sortDirection}).SetProjection(bson.M{"_id": 0})
+
 	cursor, err := db.collection.Find(context.Background(), filter, opts)
 	if err != nil {
 		return nil, err
 	}
-	// var results []map[string]interface{}
-	// err = cursor.All(context.Background(), &results)
-	// if err != nil {
-	// 	spew.Dump(err)
-	// }
-	// spew.Dump(results)
-	// log.Fatal()
-	// if ok := cursor.Next(context.Background()); !ok {
-	// 	return nil, fmt.Errorf("unable to iterate")
-	// }
+
 	cursor.Next(context.Background())
 	isReverse := sortDirection == -1
 	return newMongoDBIterator(cursor, start, end, isReverse), nil
