@@ -72,7 +72,7 @@ format:
 docker-test-image:
 	@echo "--> Building Docker test image"
 	@cd tools && \
-		docker build -t $(DOCKER_TEST_IMAGE):$(DOCKER_TEST_IMAGE_VERSION) .
+		docker build --build-arg GOARCH=amd64 --platform=linux/amd64 -t $(DOCKER_TEST_IMAGE):$(DOCKER_TEST_IMAGE_VERSION) .
 .PHONY: docker-test-image
 
 # Runs the same test as is executed in CI, but locally.

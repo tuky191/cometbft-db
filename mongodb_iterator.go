@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"log"
+	"regexp"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -126,6 +128,12 @@ func (db *MongoDB) createIterator(start, end []byte, sortDirection int) (Iterato
 		filter = bson.M{
 			"key": bson.M{
 				"$gte": start,
+			},
+		}
+	case strings.HasSuffix(string(start), "/"):
+		filter = bson.M{
+			"keyString": bson.M{
+				"$regex": primitive.Regex{Pattern: "^" + regexp.QuoteMeta(string(start)), Options: ""},
 			},
 		}
 	default:

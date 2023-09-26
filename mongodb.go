@@ -10,9 +10,7 @@ import (
 )
 
 func init() {
-	dbCreator := func(name string, dir string) (DB, error) {
-		return NewMongoDB(name, dir)
-	}
+	dbCreator := NewMongoDB
 	registerDBCreator(MongoDBBackend, dbCreator, false)
 }
 
@@ -36,15 +34,15 @@ func NewMongoDBWithOpts(name string, uri string, wc *writeconcern.WriteConcern) 
 		return nil, err
 	}
 
-	collection := client.Database(name).Collection(name)
-	var syncCollection *mongo.Collection
+	collection := client.Database("CometBFT-DB").Collection(name)
 
-	if wc != nil {
-		syncCollection = client.Database(name).Collection(name, options.Collection().SetWriteConcern(wc))
-	} else {
-		// Default to the same collection if no write concern is provided
-		syncCollection = collection
+	if wc == nil {
+		// Set to majority write concern if none is provided
+		wc = writeconcern.Majority()
 	}
+
+	// Create a syncCollection with the provided or default write concern
+	syncCollection := client.Database("CometBFT-DB").Collection(name, options.Collection().SetWriteConcern(wc))
 
 	database := &MongoDB{
 		client:         client,
@@ -122,7 +120,7 @@ func (db *MongoDB) set(key []byte, value []byte, sync bool) error {
 	_, err := collection.UpdateOne(
 		context.Background(),
 		bson.M{"key": key},
-		bson.M{"$set": bson.M{"value": value}},
+		bson.M{"$set": bson.M{"value": value, "keyString": string(key)}},
 		updateOpts,
 	)
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/strikesecurity/strikememongo"
 )
 
 //----------------------------------------
@@ -67,8 +68,20 @@ func checkValuePanics(t *testing.T, itr Iterator) {
 }
 
 func newTempDB(t *testing.T, backend BackendType) (db DB, dbDir string) {
-	dirname, err := os.MkdirTemp("", "db_common_test")
-	require.NoError(t, err)
+	var dirname string
+	var err error
+	if backend == MongoDBBackend {
+		options := &strikememongo.Options{MongoVersion: "4.0.5"}
+		mongoServer, err := strikememongo.StartWithOptions(options)
+		require.Nil(t, err)
+		// defer mongoServer.Stop()
+		// Get MongoDB URI
+		dirname = mongoServer.URI()
+	} else {
+		dirname, err = os.MkdirTemp("", "db_common_test")
+		require.NoError(t, err)
+	}
+
 	db, err = NewDB("testdb", backend, dirname)
 	require.NoError(t, err)
 	return db, dirname
