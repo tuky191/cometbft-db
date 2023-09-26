@@ -49,7 +49,6 @@ func (itr *MongoDBIterator) Valid() bool {
 
 	err := itr.cursor.Decode(&itr.current)
 	if err != nil {
-		itr.lastErr = err
 		itr.isInvalid = true
 		return false
 	}
@@ -95,7 +94,7 @@ func (itr *MongoDBIterator) Next() {
 }
 
 func (itr *MongoDBIterator) Error() error {
-	return itr.lastErr
+	return itr.cursor.Err()
 }
 
 func (itr *MongoDBIterator) Close() error {
