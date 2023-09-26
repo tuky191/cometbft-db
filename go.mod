@@ -1,4 +1,4 @@
-module github.com/cometbft/cometbft-db
+module github.com/tuky191/cometbft-db
 
 go 1.19
 
