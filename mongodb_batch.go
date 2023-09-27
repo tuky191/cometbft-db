@@ -45,7 +45,7 @@ func (b *MongoDBBatch) Set(key, value []byte) error {
 	b.ops = append(b.ops, mongo.NewUpdateOneModel().
 		SetUpsert(true).
 		SetFilter(bson.M{"key": key}).
-		SetUpdate(bson.M{"$set": bson.M{"value": value, "keyString": hex.EncodeToString(key)}}))
+		SetUpdate(bson.M{"$set": bson.M{"value": value, "keyHex": hex.EncodeToString(key)}}))
 	return nil
 }
 

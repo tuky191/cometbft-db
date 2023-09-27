@@ -45,6 +45,16 @@ func NewMongoDBWithOpts(name string, uri string, wc *writeconcern.WriteConcern) 
 	// Create a syncCollection with the provided or default write concern
 	syncCollection := client.Database("CometBFT-DB").Collection(name, options.Collection().SetWriteConcern(wc))
 
+	err = ensureIndex(collection, "key")
+	if err != nil {
+		return nil, err
+	}
+
+	err = ensureIndex(collection, "keyHex")
+	if err != nil {
+		return nil, err
+	}
+
 	database := &MongoDB{
 		client:         client,
 		databaseName:   name,
@@ -154,4 +164,33 @@ func (db *MongoDB) Print() error {
 func (db *MongoDB) Stats() map[string]string {
 	return nil
 	// Implementation here
+}
+
+func ensureIndex(collection *mongo.Collection, indexKey string) error {
+	// List existing indexes
+	cursor, err := collection.Indexes().List(context.Background())
+	if err != nil {
+		return err
+	}
+	var existingIndexes []bson.M
+	if err = cursor.All(context.Background(), &existingIndexes); err != nil {
+		return err
+	}
+
+	// Check if the index already exists
+	for _, index := range existingIndexes {
+		if indexKeyMap, ok := index["key"].(bson.M); ok {
+			if _, exists := indexKeyMap[indexKey]; exists {
+				// Index already exists, no need to create
+				return nil
+			}
+		}
+	}
+
+	// Create the index since it doesn't exist
+	indexModel := mongo.IndexModel{
+		Keys: bson.M{indexKey: 1}, // 1 for ascending
+	}
+	_, err = collection.Indexes().CreateOne(context.Background(), indexModel)
+	return err
 }
