@@ -3,6 +3,10 @@ package db
 import (
 	"context"
 	"encoding/hex"
+	"errors"
+	"fmt"
+	"net/url"
+	"os"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -30,12 +34,40 @@ func NewMongoDB(name string, uri string) (DB, error) {
 }
 
 func NewMongoDBWithOpts(name string, uri string, wc *writeconcern.WriteConcern) (DB, error) {
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(uri))
+
+	var dbName string
+
+	uriENV := os.Getenv("MONGODB_URI")
+	if uriENV != "" {
+		uri = uriENV
+	}
+
+	sanitizedURI, err := SanitizeMongoURI(uri)
+	if err != nil {
+		return nil, fmt.Errorf("invalid mongo uri %v", uri)
+	}
+
+	clientOptions := options.Client().ApplyURI(uri)
+
+	client, err := mongo.Connect(context.Background(), clientOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	collection := client.Database("CometBFT-DB").Collection(name)
+	if dbName == "" || clientOptions.Auth == nil {
+		// If AuthSource is not set, it usually defaults to "admin"
+		dbName = "CometBFT-DB"
+	} else {
+		dbName = clientOptions.Auth.AuthSource
+	}
+
+	// Check the connection
+	err = client.Ping(context.Background(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("unable to connect to mongo: %v: %v", dbName, sanitizedURI)
+	}
+
+	collection := client.Database(dbName).Collection(name)
 
 	if wc == nil {
 		// Set to majority write concern if none is provided
@@ -43,7 +75,7 @@ func NewMongoDBWithOpts(name string, uri string, wc *writeconcern.WriteConcern) 
 	}
 
 	// Create a syncCollection with the provided or default write concern
-	syncCollection := client.Database("CometBFT-DB").Collection(name, options.Collection().SetWriteConcern(wc))
+	syncCollection := client.Database(dbName).Collection(name, options.Collection().SetWriteConcern(wc))
 
 	err = ensureIndex(collection, "key")
 	if err != nil {
@@ -193,4 +225,35 @@ func ensureIndex(collection *mongo.Collection, indexKey string) error {
 	}
 	_, err = collection.Indexes().CreateOne(context.Background(), indexModel)
 	return err
+}
+
+// SanitizeMongoURI removes the username and password from a MongoDB URI.
+func SanitizeMongoURI(originalURI string) (string, error) {
+	// Parse the original URI
+	u, err := url.Parse(originalURI)
+	if err != nil {
+		return "", err
+	}
+
+	if u.Scheme != "mongodb" && u.Scheme != "mongodb+srv" {
+		return "", errors.New("invalid scheme")
+	}
+
+	// Remove username and password
+	u.User = nil
+
+	// Reconstruct the URI
+	sanitizedURI := fmt.Sprintf(
+		"%s://%s%s",
+		u.Scheme,
+		u.Host,
+		u.Path,
+	)
+
+	// If there are any query parameters, add them back
+	if u.RawQuery != "" {
+		sanitizedURI = fmt.Sprintf("%s?%s", sanitizedURI, u.RawQuery)
+	}
+
+	return sanitizedURI, nil
 }
