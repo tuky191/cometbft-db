@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -44,7 +45,7 @@ func (b *MongoDBBatch) Set(key, value []byte) error {
 	b.ops = append(b.ops, mongo.NewUpdateOneModel().
 		SetUpsert(true).
 		SetFilter(bson.M{"key": key}).
-		SetUpdate(bson.M{"$set": bson.M{"value": value, "keyString": string(key)}}))
+		SetUpdate(bson.M{"$set": bson.M{"value": value, "keyString": hex.EncodeToString(key)}}))
 	return nil
 }
 

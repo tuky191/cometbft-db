@@ -3,6 +3,7 @@ package db
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"log"
 	"regexp"
 	"strings"
@@ -131,8 +132,8 @@ func (db *MongoDB) createIterator(start, end []byte, sortDirection int) (Iterato
 		}
 	case strings.HasSuffix(string(start), "/"):
 		filter = bson.M{
-			"keyString": bson.M{
-				"$regex": primitive.Regex{Pattern: "^" + regexp.QuoteMeta(string(start)), Options: ""},
+			"keyHex": bson.M{
+				"$regex": primitive.Regex{Pattern: "^" + regexp.QuoteMeta(hex.EncodeToString(start)), Options: ""},
 			},
 		}
 	default:

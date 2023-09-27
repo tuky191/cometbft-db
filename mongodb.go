@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/hex"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -120,7 +121,7 @@ func (db *MongoDB) set(key []byte, value []byte, sync bool) error {
 	_, err := collection.UpdateOne(
 		context.Background(),
 		bson.M{"key": key},
-		bson.M{"$set": bson.M{"value": value, "keyString": string(key)}},
+		bson.M{"$set": bson.M{"value": value, "keyHex": hex.EncodeToString(key)}},
 		updateOpts,
 	)
 
