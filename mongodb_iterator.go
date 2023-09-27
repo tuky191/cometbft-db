@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/hex"
 	"log"
-	"regexp"
-	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -120,27 +118,27 @@ func (db *MongoDB) createIterator(start, end []byte, sortDirection int) (Iterato
 		filter = bson.M{}
 	case start == nil:
 		filter = bson.M{
-			"key": bson.M{
-				"$lt": end,
+			"keyHex": bson.M{
+				"$lt": hex.EncodeToString(end),
 			},
 		}
 	case end == nil:
 		filter = bson.M{
-			"key": bson.M{
-				"$gte": start,
-			},
-		}
-	case strings.HasSuffix(string(start), "/"):
-		filter = bson.M{
 			"keyHex": bson.M{
-				"$regex": primitive.Regex{Pattern: "^" + regexp.QuoteMeta(hex.EncodeToString(start)), Options: ""},
+				"$gte": hex.EncodeToString(start),
 			},
 		}
+	// case strings.HasSuffix(string(start), "/"):
+	// 	filter = bson.M{
+	// 		"keyHex": bson.M{
+	// 			"$regex": primitive.Regex{Pattern: "^" + regexp.QuoteMeta(hex.EncodeToString(start)), Options: ""},
+	// 		},
+	// 	}
 	default:
 		filter = bson.M{
-			"key": bson.M{
-				"$gte": start,
-				"$lt":  end,
+			"keyHex": bson.M{
+				"$gte": hex.EncodeToString(start),
+				"$lt":  hex.EncodeToString(end),
 			},
 		}
 	}
