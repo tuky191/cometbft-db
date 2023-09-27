@@ -35,11 +35,13 @@ func NewMongoDB(name string, uri string) (DB, error) {
 
 func NewMongoDBWithOpts(name string, uri string, wc *writeconcern.WriteConcern) (DB, error) {
 
-	var dbName string
-
 	uriENV := os.Getenv("MONGODB_URI")
 	if uriENV != "" {
 		uri = uriENV
+	}
+	dbName := os.Getenv("MONGODB_DBNAME")
+	if dbName != "" {
+		dbName = "COMETBFT_DB"
 	}
 
 	sanitizedURI, err := SanitizeMongoURI(uri)
@@ -52,13 +54,6 @@ func NewMongoDBWithOpts(name string, uri string, wc *writeconcern.WriteConcern) 
 	client, err := mongo.Connect(context.Background(), clientOptions)
 	if err != nil {
 		return nil, err
-	}
-
-	if dbName == "" || clientOptions.Auth == nil {
-		// If AuthSource is not set, it usually defaults to "admin"
-		dbName = "CometBFT-DB"
-	} else {
-		dbName = clientOptions.Auth.AuthSource
 	}
 
 	// Check the connection
