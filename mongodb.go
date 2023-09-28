@@ -40,7 +40,7 @@ func NewMongoDBWithOpts(name string, uri string, wc *writeconcern.WriteConcern) 
 		uri = uriENV
 	}
 	dbName := os.Getenv("MONGODB_DBNAME")
-	if dbName != "" {
+	if dbName == "" {
 		dbName = "COMETBFT_DB"
 	}
 
