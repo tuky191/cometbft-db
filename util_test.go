@@ -87,6 +87,8 @@ func TestPrefixIteratorMatches1N(t *testing.T) {
 			db, dir := newTempDB(t, backend)
 			defer os.RemoveAll(dir)
 
+			// itr, err := IteratePrefix(db, bz("s/k:main/"))
+			// require.NoError(t, err)
 			// prefixed
 			err := db.SetSync(bz("a/1"), bz("value_1"))
 			require.NoError(t, err)

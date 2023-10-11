@@ -44,5 +44,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
+replace github.com/strikesecurity/strikememongo => github.com/ariefdarmawan/strikememongo v0.0.0-20231010170346-44855ec27769
+
 // Breaking changes were released with the wrong tag (use v0.6.6 or later).
 retract v0.6.5

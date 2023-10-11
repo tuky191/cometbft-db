@@ -11,7 +11,8 @@ import (
 
 func TestMongoDBNewMongoDB(t *testing.T) {
 	// Start an in-memory MongoDB server
-	options := &strikememongo.Options{MongoVersion: "4.0.5"}
+	options := &strikememongo.Options{
+		DownloadURL: "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-6.0.10.tgz"}
 	mongoServer, err := strikememongo.StartWithOptions(options)
 	require.Nil(t, err)
 	defer mongoServer.Stop()
@@ -36,7 +37,8 @@ func TestMongoDBNewMongoDB(t *testing.T) {
 
 func BenchmarkMongoDBRandomReadsWrites(b *testing.B) {
 	// Start an in-memory MongoDB server
-	options := &strikememongo.Options{MongoVersion: "4.0.5"}
+	options := &strikememongo.Options{
+		DownloadURL: "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-6.0.10.tgz"}
 	mongoServer, err := strikememongo.StartWithOptions(options)
 	require.Nil(b, err)
 	defer mongoServer.Stop()

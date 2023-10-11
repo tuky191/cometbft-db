@@ -39,7 +39,8 @@ func testBackendGetSetDelete(t *testing.T, backend BackendType) {
 	var dirname string
 	var err error
 	if backend == MongoDBBackend {
-		options := &strikememongo.Options{MongoVersion: "4.0.5"}
+		options := &strikememongo.Options{
+			DownloadURL: "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-6.0.10.tgz"}
 		mongoServer, err := strikememongo.StartWithOptions(options)
 		require.Nil(t, err)
 		defer mongoServer.Stop()
@@ -179,7 +180,8 @@ func testDBIterator(t *testing.T, backend BackendType) {
 	var dir2 string
 	name := fmt.Sprintf("test_%x", randStr(12))
 	if backend == MongoDBBackend {
-		options := &strikememongo.Options{MongoVersion: "4.0.5"}
+		options := &strikememongo.Options{
+			DownloadURL: "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-6.0.10.tgz"}
 		mongoServer, err := strikememongo.StartWithOptions(options)
 		require.Nil(t, err)
 		defer mongoServer.Stop()
@@ -328,7 +330,8 @@ func testDBIterator(t *testing.T, backend BackendType) {
 	// Ensure that the iterators don't panic with an empty database.
 
 	if backend == MongoDBBackend {
-		options := &strikememongo.Options{MongoVersion: "4.0.5"}
+		options := &strikememongo.Options{
+			DownloadURL: "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-6.0.10.tgz"}
 		mongoServer, err := strikememongo.StartWithOptions(options)
 		require.Nil(t, err)
 		defer mongoServer.Stop()
@@ -375,7 +378,8 @@ func testDBBatch(t *testing.T, backend BackendType) {
 	name := fmt.Sprintf("test_%x", randStr(12))
 	var dir string
 	if backend == MongoDBBackend {
-		options := &strikememongo.Options{MongoVersion: "4.0.5"}
+		options := &strikememongo.Options{
+			DownloadURL: "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-6.0.10.tgz"}
 		mongoServer, err := strikememongo.StartWithOptions(options)
 		require.Nil(t, err)
 		defer mongoServer.Stop()

@@ -71,7 +71,8 @@ func newTempDB(t *testing.T, backend BackendType) (db DB, dbDir string) {
 	var dirname string
 	var err error
 	if backend == MongoDBBackend {
-		options := &strikememongo.Options{MongoVersion: "4.0.5"}
+		options := &strikememongo.Options{
+			DownloadURL: "https://fastdl.mongodb.org/osx/mongodb-macos-arm64-6.0.10.tgz"}
 		mongoServer, err := strikememongo.StartWithOptions(options)
 		require.Nil(t, err)
 		// defer mongoServer.Stop()
